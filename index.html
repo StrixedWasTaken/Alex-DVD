@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Responsive DVD Logo Emulator</title>
+<title>DVD Logo Emulator</title>
 <style>
   body {
     margin: 0;
     background: #000;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
-    color: #eee;
-    font-family: monospace, monospace;
   }
   canvas {
     background: #111;
@@ -24,13 +21,9 @@
     max-height: 90vh;
     display: block;
   }
-  h1 {
-    margin: 10px 0;
-  }
 </style>
 </head>
 <body>
-  <h1>Responsive DVD Logo Emulator</h1>
   <canvas id="screen"></canvas>
 
 <script>
@@ -40,7 +33,7 @@
   const dvdLogo = new Image();
   dvdLogo.src = 'dvd_logo.png';
 
-  const ASPECT_RATIO = 16 / 9; // Width:Height ratio for canvas
+  const ASPECT_RATIO = 16 / 9;
 
   let x, y, dx = 3, dy = 3;
   let logoWidth, logoHeight;
@@ -57,11 +50,9 @@
     canvas.width = width;
     canvas.height = height;
 
-    // Scale logo to 20% of canvas width
     logoWidth = width * 0.2;
     logoHeight = logoWidth * (dvdLogo.height / dvdLogo.width);
 
-    // Keep logo inside bounds after resize
     x = Math.min(x || 0, canvas.width - logoWidth);
     y = Math.min(y || 0, canvas.height - logoHeight);
   }
@@ -72,15 +63,10 @@
     if (celebrating) return;
     celebrating = true;
 
-    // Flash the background for celebration
     let flashCount = 0;
     const maxFlashes = 6;
     const flashInterval = setInterval(() => {
-      if (flashCount % 2 === 0) {
-        canvas.style.backgroundColor = '#0f0';
-      } else {
-        canvas.style.backgroundColor = '#111';
-      }
+      canvas.style.backgroundColor = (flashCount % 2 === 0) ? '#0f0' : '#111';
       flashCount++;
       if (flashCount > maxFlashes) {
         clearInterval(flashInterval);
@@ -131,7 +117,6 @@
 
   dvdLogo.onload = () => {
     resizeCanvas();
-    // Start in a random position inside canvas
     x = Math.random() * (canvas.width - logoWidth);
     y = Math.random() * (canvas.height - logoHeight);
     animate();
