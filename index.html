@@ -3,124 +3,113 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DVD Logo Emulator</title>
+<title>DVD Logo Bounce with Celebration</title>
 <style>
   body {
     margin: 0;
-    background: #000;
+    overflow: hidden;
+    background: black;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     height: 100vh;
   }
-  canvas {
-    background: #111;
-    border: 3px solid #444;
-    border-radius: 10px;
-    max-width: 100vw;
-    max-height: 90vh;
-    display: block;
+  #dvdLogo {
+    position: fixed;
+    width: 100px;
+    height: 50px;
+    transition: transform 0.3s ease, filter 0.3s ease;
+    user-select: none;
+    pointer-events: none;
+  }
+  /* Celebration style */
+  #dvdLogo.celebrate {
+    filter: drop-shadow(0 0 10px #ff0) drop-shadow(0 0 20px #ff0);
+    transform: scale(1.3) rotate(15deg);
   }
 </style>
 </head>
 <body>
-  <canvas id="screen"></canvas>
+
+<img id="dvdLogo" src="dvd_logo.png" alt="DVD Logo" />
 
 <script>
-  const canvas = document.getElementById('screen');
-  const ctx = canvas.getContext('2d');
+  const dvdLogo = document.getElementById('dvdLogo');
+  const width = 100;
+  const height = 50;
 
-  const dvdLogo = new Image();
-  dvdLogo.src = 'dvd_logo.png';
-
-  const ASPECT_RATIO = 16 / 9;
-
-  let x, y, dx = 3, dy = 3;
-  let logoWidth, logoHeight;
-
-  function resizeCanvas() {
-    let width = window.innerWidth * 0.9;
-    let height = width / ASPECT_RATIO;
-
-    if (height > window.innerHeight * 0.9) {
-      height = window.innerHeight * 0.9;
-      width = height * ASPECT_RATIO;
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    logoWidth = width * 0.2;
-    logoHeight = logoWidth * (dvdLogo.height / dvdLogo.width);
-
-    x = Math.min(x || 0, canvas.width - logoWidth);
-    y = Math.min(y || 0, canvas.height - logoHeight);
-  }
+  let posX = Math.random() * (window.innerWidth - width);
+  let posY = Math.random() * (window.innerHeight - height);
+  let speedX = 3;
+  let speedY = 2;
 
   let celebrating = false;
 
-  function celebrate() {
-    if (celebrating) return;
-    celebrating = true;
-
-    let flashCount = 0;
-    const maxFlashes = 6;
-    const flashInterval = setInterval(() => {
-      canvas.style.backgroundColor = (flashCount % 2 === 0) ? '#0f0' : '#111';
-      flashCount++;
-      if (flashCount > maxFlashes) {
-        clearInterval(flashInterval);
-        canvas.style.backgroundColor = '#111';
-        celebrating = false;
-      }
-    }, 150);
+  function isCorner(x, y) {
+    const nearLeft = x < 5;
+    const nearTop = y < 5;
+    const nearRight = x > window.innerWidth - width - 5;
+    const nearBottom = y > window.innerHeight - height - 5;
+    // True if near both horizontal and vertical edges = corner
+    return (nearLeft || nearRight) && (nearTop || nearBottom);
   }
 
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  function celebrate() {
+    if (celebrating) return; // ignore if already celebrating
+    celebrating = true;
+    dvdLogo.classList.add('celebrate');
+    setTimeout(() => {
+      dvdLogo.classList.remove('celebrate');
+      celebrating = false;
+    }, 1000);
+  }
 
-    x += dx;
-    y += dy;
+  function updatePosition() {
+    posX += speedX;
+    posY += speedY;
 
     let hitEdge = false;
 
-    if (x + logoWidth >= canvas.width) {
-      x = canvas.width - logoWidth;
-      dx = -dx;
+    if (posX + width > window.innerWidth) {
+      speedX = -speedX;
+      posX = window.innerWidth - width;
       hitEdge = true;
-    } else if (x <= 0) {
-      x = 0;
-      dx = -dx;
+    }
+    else if (posX < 0) {
+      speedX = -speedX;
+      posX = 0;
       hitEdge = true;
     }
 
-    if (y + logoHeight >= canvas.height) {
-      y = canvas.height - logoHeight;
-      dy = -dy;
+    if (posY + height > window.innerHeight) {
+      speedY = -speedY;
+      posY = window.innerHeight - height;
       hitEdge = true;
-    } else if (y <= 0) {
-      y = 0;
-      dy = -dy;
+    }
+    else if (posY < 0) {
+      speedY = -speedY;
+      posY = 0;
       hitEdge = true;
     }
 
-    if (hitEdge) {
+    dvdLogo.style.left = posX + 'px';
+    dvdLogo.style.top = posY + 'px';
+
+    if (hitEdge && isCorner(posX, posY)) {
       celebrate();
     }
 
-    ctx.drawImage(dvdLogo, x, y, logoWidth, logoHeight);
-
-    requestAnimationFrame(animate);
+    requestAnimationFrame(updatePosition);
   }
 
-  window.addEventListener('resize', resizeCanvas);
+  updatePosition();
 
-  dvdLogo.onload = () => {
-    resizeCanvas();
-    x = Math.random() * (canvas.width - logoWidth);
-    y = Math.random() * (canvas.height - logoHeight);
-    animate();
-  };
+  // Re-center on resize to avoid stuck positions
+  window.addEventListener('resize', () => {
+    posX = Math.min(posX, window.innerWidth - width);
+    posY = Math.min(posY, window.innerHeight - height);
+  });
 </script>
+
 </body>
 </html>
