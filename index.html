@@ -1,110 +1,127 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Alex DVD</title>
+<title>DVD Bounce with Celebration and Background Music</title>
 <style>
   body {
     margin: 0;
     overflow: hidden;
     background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     height: 100vh;
   }
   #dvdLogo {
     position: fixed;
-    width: 100px;
-    height: 50px;
-    transition: transform 0.3s ease, filter 0.3s ease;
+    width: 200px;
+    height: 150px;
     user-select: none;
     pointer-events: none;
   }
-  /* Celebration style */
-  #dvdLogo.celebrate {
-    filter: drop-shadow(0 0 10px #ff0) drop-shadow(0 0 20px #ff0);
-    transform: scale(1.3) rotate(15deg);
+  #celebrationLogo {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 1000;
   }
 </style>
 </head>
 <body>
 
 <img id="dvdLogo" src="dvd_logo.png" alt="DVD Logo" />
+<img id="celebrationLogo" src="shiestyalex.png" alt="Celebration Logo" />
+
+<audio id="backgroundMusic" src="lumber_tycoon2_shop.mp3" loop preload="auto"></audio>
+<audio id="celebrationMusic" src="celebration_music.mp3" preload="auto"></audio>
 
 <script>
   const dvdLogo = document.getElementById('dvdLogo');
-  const width = 100;
-  const height = 50;
+  const celebrationLogo = document.getElementById('celebrationLogo');
+  const backgroundMusic = document.getElementById('backgroundMusic');
+  const celebrationMusic = document.getElementById('celebrationMusic');
 
-  let posX = Math.random() * (window.innerWidth - width);
-  let posY = Math.random() * (window.innerHeight - height);
-  let speedX = 3;
-  let speedY = 2;
+  const width = 200;
+  const height = 150;
+
+  let posX = 10;
+  let posY = 10;
+
+  let speedX = 4;
+  let speedY = 3;
 
   let celebrating = false;
-
-  function isCorner(x, y) {
-    const nearLeft = x < 5;
-    const nearTop = y < 5;
-    const nearRight = x > window.innerWidth - width - 5;
-    const nearBottom = y > window.innerHeight - height - 5;
-    // True if near both horizontal and vertical edges = corner
-    return (nearLeft || nearRight) && (nearTop || nearBottom);
-  }
-
-  function celebrate() {
-    if (celebrating) return; // ignore if already celebrating
-    celebrating = true;
-    dvdLogo.classList.add('celebrate');
-    setTimeout(() => {
-      dvdLogo.classList.remove('celebrate');
-      celebrating = false;
-    }, 1000);
-  }
+  let backgroundMusicStarted = false;
 
   function updatePosition() {
+    if (celebrating) {
+      requestAnimationFrame(updatePosition);
+      return; // pause movement while celebrating
+    }
+
     posX += speedX;
     posY += speedY;
 
-    let hitEdge = false;
-
-    if (posX + width > window.innerWidth) {
+    if (posX + width > window.innerWidth || posX < 0) {
       speedX = -speedX;
-      posX = window.innerWidth - width;
-      hitEdge = true;
+      posX = Math.min(Math.max(posX, 0), window.innerWidth - width);
     }
-    else if (posX < 0) {
-      speedX = -speedX;
-      posX = 0;
-      hitEdge = true;
-    }
-
-    if (posY + height > window.innerHeight) {
+    if (posY + height > window.innerHeight || posY < 0) {
       speedY = -speedY;
-      posY = window.innerHeight - height;
-      hitEdge = true;
-    }
-    else if (posY < 0) {
-      speedY = -speedY;
-      posY = 0;
-      hitEdge = true;
+      posY = Math.min(Math.max(posY, 0), window.innerHeight - height);
     }
 
     dvdLogo.style.left = posX + 'px';
     dvdLogo.style.top = posY + 'px';
 
-    if (hitEdge && isCorner(posX, posY)) {
-      celebrate();
-    }
-
     requestAnimationFrame(updatePosition);
   }
 
+  function celebrate() {
+    if (celebrating) return;
+    celebrating = true;
+
+    celebrationMusic.volume = 1.0;
+    celebrationMusic.currentTime = 0;
+    celebrationMusic.play();
+
+    celebrationLogo.style.display = 'block';
+
+    setTimeout(() => {
+      celebrationLogo.style.display = 'none';
+      celebrating = false;
+    }, 1250);
+  }
+
+  // Starts background music on first user interaction
+  function startBackgroundMusic() {
+    if (!backgroundMusicStarted) {
+      backgroundMusic.volume = 0.5;
+      backgroundMusic.play().catch(() => {
+        console.log('Background music playback was prevented.');
+      });
+      backgroundMusicStarted = true;
+      window.removeEventListener('click', startBackgroundMusic);
+      window.removeEventListener('keydown', startBackgroundMusic);
+    }
+  }
+
+  window.addEventListener('click', (event) => {
+    startBackgroundMusic();
+    celebrate();
+  });
+
+  window.addEventListener('keydown', (event) => {
+    startBackgroundMusic();
+  });
+
+  // Initialize DVD logo position and start animation loop
+  dvdLogo.style.left = posX + 'px';
+  dvdLogo.style.top = posY + 'px';
   updatePosition();
 
-  // Re-center on resize to avoid stuck positions
   window.addEventListener('resize', () => {
     posX = Math.min(posX, window.innerWidth - width);
     posY = Math.min(posY, window.innerHeight - height);
